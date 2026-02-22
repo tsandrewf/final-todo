@@ -1,0 +1,104 @@
+package ru.jabki.final_todo.repository;
+
+import lombok.AllArgsConstructor;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.stereotype.Repository;
+import ru.jabki.final_todo.exception.BadRequestException;
+import ru.jabki.final_todo.model.Todo;
+import ru.jabki.final_todo.model.TodoResponse;
+import ru.jabki.final_todo.model.TodoUpdate;
+
+import java.util.List;
+
+@Repository
+@AllArgsConstructor
+public class TodoRepository {
+
+    private static final String INSERT = """
+            INSERT INTO final_todo.todo (title, description, status, dead_line, author_id, assignee_id, created_at)
+            VALUES (:title, :description, :status, :dead_line, :author_id, :assignee_id, now())
+            RETURNING *;
+            """;
+
+    private static final String GET_BY_ID = """
+            SELECT *
+            FROM final_todo.todo
+            WHERE id = :id
+            AND deleted_at IS NULL
+            """;
+
+
+    private static final String LIST = """
+            SELECT *
+            FROM final_todo.todo
+            WHERE deleted_at IS NULL
+            """;
+
+    private static final String DELETE = """
+            UPDATE final_todo.todo
+            SET deleted_at = now()
+            WHERE id = :id
+            AND deleted_at IS NULL
+            """;
+
+    private static final String UPDATE = """
+            UPDATE final_todo.todo
+            SET title = :title, status = :status, updated_at = now()
+            WHERE id = :id
+            RETURNING *;
+            """;
+
+    private final TodoMapper todoMapper;
+    private final NamedParameterJdbcTemplate jdbcTemplate;
+
+    public TodoResponse insert(final Todo todo) {
+        return jdbcTemplate.queryForObject(INSERT, todoToSql(todo), todoMapper);
+    }
+
+    public TodoResponse getById(final Long id) {
+        try {
+            return jdbcTemplate.queryForObject(GET_BY_ID, new MapSqlParameterSource("id", id), todoMapper);
+        } catch (DataAccessException e) {
+            throw new BadRequestException(String.format("Задача с id %s не найдена", id));
+        }
+    }
+
+    public List<TodoResponse> list() {
+        return jdbcTemplate.query(LIST, new MapSqlParameterSource(), todoMapper);
+    }
+
+    public void delete(final Long id) {
+        if (jdbcTemplate.update(DELETE, new MapSqlParameterSource("id", id)) == 0) {
+            throw new BadRequestException(String.format("Задача с id %s не найдена", id));
+        }
+    }
+
+    public TodoResponse update(final TodoUpdate todoUpdate) {
+        return jdbcTemplate.queryForObject(UPDATE, todoUpdateToSql(todoUpdate), todoMapper);
+    }
+
+    public MapSqlParameterSource todoToSql(final Todo todo) {
+        final MapSqlParameterSource params = new MapSqlParameterSource();
+
+        params.addValue("title", todo.getTitle());
+        params.addValue("description", todo.getDescription());
+        params.addValue("status", todo.getStatus().getId());
+        params.addValue("dead_line", todo.getDeadLine());
+        params.addValue("author_id", todo.getAuthorId());
+        params.addValue("assignee_id", todo.getAssigneeId());
+
+        return params;
+    }
+
+    public MapSqlParameterSource todoUpdateToSql(final TodoUpdate todoUpdate) {
+        final MapSqlParameterSource params = new MapSqlParameterSource();
+
+        params.addValue("id", todoUpdate.getId());
+        params.addValue("title", todoUpdate.getTitle());
+        params.addValue("status", todoUpdate.getStatus().getId());
+
+        return params;
+    }
+}
