@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import ru.jabki.final_todo.model.Status;
 import ru.jabki.final_todo.model.Todo;
 import ru.jabki.final_todo.model.TodoResponse;
 import ru.jabki.final_todo.model.TodoUpdate;
@@ -35,8 +36,8 @@ public class TodoController {
 
     @GetMapping("/list")
     @Operation(summary = "Получение списка задач")
-    public List<TodoResponse> list() {
-        return todoService.list();
+    public List<TodoResponse> list(@RequestParam(required = false) Status status, @RequestParam(required = false) Long assigneeId) {
+        return todoService.list(status, assigneeId);
     }
 
     @DeleteMapping("/{id}")

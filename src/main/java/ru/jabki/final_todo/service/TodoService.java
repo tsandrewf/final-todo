@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import ru.jabki.final_todo.exception.TodoException;
+import ru.jabki.final_todo.model.Status;
 import ru.jabki.final_todo.model.Todo;
 import ru.jabki.final_todo.model.TodoResponse;
 import ru.jabki.final_todo.model.TodoUpdate;
@@ -32,8 +33,8 @@ public class TodoService {
     }
 
     @Transactional(readOnly = true)
-    public List<TodoResponse> list() {
-        return todoRepository.list();
+    public List<TodoResponse> list(Status status, Long assigneeId) {
+        return todoRepository.list(status, assigneeId);
     }
 
     @Transactional(rollbackFor = Exception.class)

@@ -5,7 +5,9 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.bind.annotation.RequestParam;
 import ru.jabki.final_todo.exception.BadRequestException;
+import ru.jabki.final_todo.model.Status;
 import ru.jabki.final_todo.model.Todo;
 import ru.jabki.final_todo.model.TodoResponse;
 import ru.jabki.final_todo.model.TodoUpdate;
@@ -50,6 +52,25 @@ public class TodoRepository {
             RETURNING *;
             """;
 
+    private static String getSearchSql(Status status, Long assigneeId) {
+        String searchSql = """
+            SELECT *
+            FROM final_todo.todo
+            WHERE deleted_at IS NULL
+                """;
+
+        if (status != null) {
+            searchSql = searchSql.concat(" AND status = :status");
+            //searchSql = searchSql.concat(" AND status = 1");
+        }
+
+        if (assigneeId != null) {
+            searchSql = searchSql.concat(" AND assignee_id = :assignee_id");
+        }
+
+        return searchSql;
+    }
+
     private final TodoMapper todoMapper;
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
@@ -65,8 +86,8 @@ public class TodoRepository {
         }
     }
 
-    public List<TodoResponse> list() {
-        return jdbcTemplate.query(LIST, new MapSqlParameterSource(), todoMapper);
+    public List<TodoResponse> list(Status status, Long assigneeId) {
+        return jdbcTemplate.query(getSearchSql(status, assigneeId), searchToSql(status, assigneeId), todoMapper);
     }
 
     public void delete(final Long id) {
@@ -98,6 +119,15 @@ public class TodoRepository {
         params.addValue("id", todoUpdate.getId());
         params.addValue("title", todoUpdate.getTitle());
         params.addValue("status", todoUpdate.getStatus().getId());
+
+        return params;
+    }
+
+    public MapSqlParameterSource searchToSql(Status status, Long assigneeId) {
+        final MapSqlParameterSource params = new MapSqlParameterSource();
+
+        params.addValue("status", (status == null ? null : status.getId()));
+        params.addValue("assignee_id", assigneeId);
 
         return params;
     }
