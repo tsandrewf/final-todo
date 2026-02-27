@@ -48,6 +48,11 @@ public class TodoService {
         return todoRepository.update(todoUpdate);
     }
 
+    @Transactional(readOnly = true)
+    public boolean userByIdInvolved(final long userId) {
+        return todoRepository.userByIdInvolved(userId);
+    }
+
     private void validate(final Todo todo) {
         if (todo == null) {
             throw new TodoException("Задача не задана");

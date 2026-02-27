@@ -53,4 +53,10 @@ public class TodoController {
     public TodoResponse update(@RequestBody final TodoUpdate todoUpdate) {
         return todoService.update(todoUpdate);
     }
+
+    @GetMapping("/userByIdInvolved/{id}")
+    @Operation(summary = "Пользователь с id задействован в задачах")
+    public boolean userByIdInvolved(@PathVariable("id") Long userId) {
+        return todoService.userByIdInvolved(userId);
+    }
 }

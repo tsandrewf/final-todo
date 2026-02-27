@@ -2,6 +2,7 @@ package ru.jabki.final_todo.repository;
 
 import lombok.AllArgsConstructor;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -61,7 +62,6 @@ public class TodoRepository {
 
         if (status != null) {
             searchSql = searchSql.concat(" AND status = :status");
-            //searchSql = searchSql.concat(" AND status = 1");
         }
 
         if (assigneeId != null) {
@@ -70,6 +70,14 @@ public class TodoRepository {
 
         return searchSql;
     }
+
+    private static final String USER_BY_ID_INVOLVED = """
+            SELECT *
+            FROM final_todo.todo
+            WHERE (author_id = :user_id OR assignee_id = :user_id)
+            AND deleted_at IS NULL
+            LIMIT 1
+            """;
 
     private final TodoMapper todoMapper;
     private final NamedParameterJdbcTemplate jdbcTemplate;
@@ -98,6 +106,15 @@ public class TodoRepository {
 
     public TodoResponse update(final TodoUpdate todoUpdate) {
         return jdbcTemplate.queryForObject(UPDATE, todoUpdateToSql(todoUpdate), todoMapper);
+    }
+
+    public boolean userByIdInvolved(final Long userId) {
+        try {
+            jdbcTemplate.queryForObject(USER_BY_ID_INVOLVED, new MapSqlParameterSource("user_id", userId), todoMapper);
+            return true;
+        } catch (EmptyResultDataAccessException e) {
+            return false;
+        }
     }
 
     public MapSqlParameterSource todoToSql(final Todo todo) {
