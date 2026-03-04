@@ -38,11 +38,6 @@ public class TodoService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void delete(Long id) {
-        todoRepository.delete(id);
-    }
-
-    @Transactional(rollbackFor = Exception.class)
     public TodoResponse update(final TodoUpdate todoUpdate) {
         validateUpdate(todoUpdate);
         return todoRepository.update(todoUpdate);
@@ -64,12 +59,12 @@ public class TodoService {
             throw new TodoException("Описание задачи не задано");
         }
         if (todo.getStatus() == null) {
-            throw new TodoException("Статус задачи не задан");
+            todo.setStatus(Status.TO_DO);
         }
         if (todo.getDeadLine() == null) {
             throw new TodoException("Дата окончания задачи не задана");
         }
-        if ((todo.getDeadLine().isBefore(LocalDate.now()) || (todo.getDeadLine().isEqual(LocalDate.now())))) {
+        if (todo.getDeadLine().isBefore(LocalDate.now())) {
             throw new TodoException(String.format("Дата окончания задачи '%s' должна быть позже текущей", todo.getDeadLine()));
         }
 
@@ -88,6 +83,7 @@ public class TodoService {
             throw new TodoException("Статус задачи не задан");
         }
 
+        validateUser(todoUpdate.getAssigneeId(), "Ответственный за выполнение");
         validateUser(todoUpdate.getEditorId(), "Редактор");
     }
 

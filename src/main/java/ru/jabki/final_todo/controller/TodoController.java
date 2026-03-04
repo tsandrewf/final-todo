@@ -17,7 +17,7 @@ import java.util.Map;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/todo")
-@Tag(name = "Пользователи")
+@Tag(name = "Задачи")
 public class TodoController {
 
     private final TodoService todoService;
@@ -38,14 +38,6 @@ public class TodoController {
     @Operation(summary = "Получение списка задач")
     public List<TodoResponse> list(@RequestParam(required = false) Status status, @RequestParam(required = false) Long assigneeId) {
         return todoService.list(status, assigneeId);
-    }
-
-    @DeleteMapping("/{id}")
-    @Operation(summary = "Удаление задачи")
-    @ResponseBody
-    public Map<String, Boolean> delete(@PathVariable("id") Long id) {
-        todoService.delete(id);
-        return Collections.singletonMap("success", true);
     }
 
     @PatchMapping

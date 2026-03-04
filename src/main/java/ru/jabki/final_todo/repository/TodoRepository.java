@@ -6,8 +6,8 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
-import org.springframework.web.bind.annotation.RequestParam;
 import ru.jabki.final_todo.exception.BadRequestException;
+import ru.jabki.final_todo.exception.TodoByIdNotFoundException;
 import ru.jabki.final_todo.model.Status;
 import ru.jabki.final_todo.model.Todo;
 import ru.jabki.final_todo.model.TodoResponse;
@@ -29,26 +29,19 @@ public class TodoRepository {
             SELECT *
             FROM final_todo.todo
             WHERE id = :id
-            AND deleted_at IS NULL
+            AND status <> 4
             """;
 
 
     private static final String LIST = """
             SELECT *
             FROM final_todo.todo
-            WHERE deleted_at IS NULL
-            """;
-
-    private static final String DELETE = """
-            UPDATE final_todo.todo
-            SET deleted_at = now()
-            WHERE id = :id
-            AND deleted_at IS NULL
+            WHERE status <> 4
             """;
 
     private static final String UPDATE = """
             UPDATE final_todo.todo
-            SET title = :title, status = :status, updated_at = now()
+            SET title = :title, description =:description, dead_line =:dead_line, assignee_id = :assignee_id, status = :status, updated_at = now()
             WHERE id = :id
             RETURNING *;
             """;
@@ -57,7 +50,7 @@ public class TodoRepository {
         String searchSql = """
             SELECT *
             FROM final_todo.todo
-            WHERE deleted_at IS NULL
+            WHERE status <> 4
                 """;
 
         if (status != null) {
@@ -72,11 +65,12 @@ public class TodoRepository {
     }
 
     private static final String USER_BY_ID_INVOLVED = """
-            SELECT *
-            FROM final_todo.todo
-            WHERE (author_id = :user_id OR assignee_id = :user_id)
-            AND deleted_at IS NULL
-            LIMIT 1
+            SELECT EXISTS (
+                SELECT 1
+                FROM final_todo.todo
+                WHERE (author_id = :user_id OR assignee_id = :user_id)
+                AND status <> 4
+            )
             """;
 
     private final TodoMapper todoMapper;
@@ -90,7 +84,7 @@ public class TodoRepository {
         try {
             return jdbcTemplate.queryForObject(GET_BY_ID, new MapSqlParameterSource("id", id), todoMapper);
         } catch (DataAccessException e) {
-            throw new BadRequestException(String.format("Задача с id %s не найдена", id));
+            throw new TodoByIdNotFoundException(id);
         }
     }
 
@@ -98,23 +92,19 @@ public class TodoRepository {
         return jdbcTemplate.query(getSearchSql(status, assigneeId), searchToSql(status, assigneeId), todoMapper);
     }
 
-    public void delete(final Long id) {
-        if (jdbcTemplate.update(DELETE, new MapSqlParameterSource("id", id)) == 0) {
-            throw new BadRequestException(String.format("Задача с id %s не найдена", id));
-        }
-    }
-
     public TodoResponse update(final TodoUpdate todoUpdate) {
         return jdbcTemplate.queryForObject(UPDATE, todoUpdateToSql(todoUpdate), todoMapper);
     }
 
     public boolean userByIdInvolved(final Long userId) {
-        try {
+        /*try {
             jdbcTemplate.queryForObject(USER_BY_ID_INVOLVED, new MapSqlParameterSource("user_id", userId), todoMapper);
             return true;
         } catch (EmptyResultDataAccessException e) {
             return false;
-        }
+        }*/
+        return Boolean.TRUE.equals(
+                jdbcTemplate.queryForObject(USER_BY_ID_INVOLVED, new MapSqlParameterSource("user_id", userId), Boolean.class));
     }
 
     public MapSqlParameterSource todoToSql(final Todo todo) {
@@ -135,6 +125,9 @@ public class TodoRepository {
 
         params.addValue("id", todoUpdate.getId());
         params.addValue("title", todoUpdate.getTitle());
+        params.addValue("description", todoUpdate.getDescription());
+        params.addValue("dead_line", todoUpdate.getDeadLine());
+        params.addValue("assignee_id", todoUpdate.getAssigneeId());
         params.addValue("status", todoUpdate.getStatus().getId());
 
         return params;

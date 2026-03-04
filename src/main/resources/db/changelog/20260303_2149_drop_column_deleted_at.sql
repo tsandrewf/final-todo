@@ -1,0 +1,1 @@
+ALTER TABLE final_todo.todo DROP COLUMN deleted_at;
