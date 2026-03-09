@@ -13,3 +13,10 @@ databaseChangeLog:
         - sqlFile:
             path: 20260303_2149_drop_column_deleted_at.sql
             relativeToChangelogFile: true
+  - changeSet:
+      id: init_todo_history_table
+      author: me
+      changes:
+        - sqlFile:
+            path: 20260307_1348_init_todo_history_table.sql
+            relativeToChangelogFile: true

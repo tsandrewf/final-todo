@@ -3,6 +3,7 @@ package ru.jabki.final_todo.service;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import ru.jabki.final_todo.model.UserCredentials;
 
 @Service
 public class ExternalUserService {
@@ -21,5 +22,14 @@ public class ExternalUserService {
                 .get()
                 .uri("/api/v1/user/exists/{id}", userId)
                 .retrieve().body(String.class));
+    }
+
+    public UserCredentials userCredentials(String username) {
+
+        return restClient
+                .get()
+                .uri("/api/v1/user/credentials/{username}", username)
+                .retrieve()
+                .body(UserCredentials.class);
     }
 }
