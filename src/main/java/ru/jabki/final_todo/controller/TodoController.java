@@ -49,10 +49,4 @@ public class TodoController {
     public boolean userByIdInvolved(@PathVariable("id") Long userId) {
         return todoService.userByIdInvolved(userId);
     }
-
-    @GetMapping("/getByIdHistory/{id}")
-    @Operation(summary = "История изменений задачи")
-    public List<TodoResponse> getByIdHistory(@PathVariable("id") Long id) {
-        return todoService.getByIdHistory(id);
-    }
 }

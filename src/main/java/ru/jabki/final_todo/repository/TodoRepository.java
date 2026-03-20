@@ -64,28 +64,6 @@ public class TodoRepository {
             )
             """;
 
-    private static final String INSERT_TODO_HISTORY = """
-            INSERT INTO final_todo.todo_history (todo_id, title, description, status, dead_line, author_id, assignee_id, created_at, updated_at)
-            VALUES (:todo_id, :title, :description, :status, :dead_line, :author_id, :assignee_id, :created_at, :updated_at);
-            """;
-
-    private static final String GET_BY_ID_HISTORY = """
-            SELECT *
-            FROM (SELECT todo_id as id, title, description, status, dead_line, author_id, assignee_id, created_at, updated_at
-                  FROM final_todo.todo_history
-                  WHERE todo_id = :id
-                  AND status <> """ + Status.DELETE.getId() + """
-
-                  UNION ALL
-
-                  SELECT id, title, description, status, dead_line, author_id, assignee_id, created_at, updated_at
-                  FROM final_todo.todo
-                  WHERE id = :id
-                  AND status <> """ + Status.DELETE.getId() + """
-                 ) AS th
-            ORDER BY COALESCE(updated_at, created_at) DESC
-            """;
-
     private final TodoMapper todoMapper;
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
@@ -112,14 +90,6 @@ public class TodoRepository {
     public boolean userByIdInvolved(final Long userId) {
         return Boolean.TRUE.equals(
                 jdbcTemplate.queryForObject(USER_BY_ID_INVOLVED, new MapSqlParameterSource("user_id", userId), Boolean.class));
-    }
-
-    public void insertTodoHistory(final TodoResponse todoResponse) {
-        jdbcTemplate.update(INSERT_TODO_HISTORY, todoResponseToSql(todoResponse));
-    }
-
-    public List<TodoResponse> getByIdHistory(final Long id) {
-        return jdbcTemplate.query(GET_BY_ID_HISTORY, new MapSqlParameterSource("id", id), todoMapper);
     }
 
     public MapSqlParameterSource todoToSql(final Todo todo) {
@@ -160,10 +130,7 @@ public class TodoRepository {
     public MapSqlParameterSource todoResponseToSql(final TodoResponse todoResponse) {
         final MapSqlParameterSource params = new MapSqlParameterSource();
 
-        //params.addValue("todo_id", todoResponse.getId());
-
         params.addValue("todo_id", todoResponse.getId());
-
         params.addValue("title", todoResponse.getTitle());
         params.addValue("description", todoResponse.getDescription());
         params.addValue("dead_line", todoResponse.getDeadLine());

@@ -1,5 +1,6 @@
 package ru.jabki.final_todo.service;
 
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -9,9 +10,9 @@ import org.springframework.stereotype.Service;
 import ru.jabki.final_todo.model.UserCredentials;
 
 @Service
+@AllArgsConstructor
 public class TodoUserDetailsService implements UserDetailsService {
 
-    @Autowired
     private ExternalUserService externalUserService;
 
     @Override

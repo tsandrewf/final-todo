@@ -12,6 +12,7 @@ import ru.jabki.final_todo.model.Status;
 import ru.jabki.final_todo.model.Todo;
 import ru.jabki.final_todo.model.TodoResponse;
 import ru.jabki.final_todo.model.TodoUpdate;
+import ru.jabki.final_todo.repository.TodoHistoryRepository;
 import ru.jabki.final_todo.repository.TodoRepository;
 
 import java.time.LocalDate;
@@ -23,6 +24,7 @@ import java.util.Objects;
 public class TodoService {
 
     private final TodoRepository todoRepository;
+    private final TodoHistoryRepository todoHistoryRepository;
     private ExternalUserService externalUserService;
 
     @Secured("ROLE_MANAGER")
@@ -50,7 +52,7 @@ public class TodoService {
         TodoResponse todoResponseOld = todoRepository.getById(todoUpdate.getId());
         validateUpdate(todoUpdate, todoResponseOld);
         TodoResponse todoResponse = todoRepository.update(todoUpdate);
-        todoRepository.insertTodoHistory(todoResponseOld);
+        todoHistoryRepository.insertTodoHistory(todoResponseOld);
         return todoResponse;
     }
 
@@ -58,12 +60,6 @@ public class TodoService {
     @Transactional(readOnly = true)
     public boolean userByIdInvolved(final long userId) {
         return todoRepository.userByIdInvolved(userId);
-    }
-
-    @Secured({"ROLE_MANAGER", "ROLE_USER"})
-    @Transactional(readOnly = true)
-    public List<TodoResponse> getByIdHistory(final long id) {
-        return todoRepository.getByIdHistory(id);
     }
 
     private void validate(final Todo todo) {
@@ -133,7 +129,7 @@ public class TodoService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (!todoUpdate.getAssigneeId().equals(todoResponseOld.getAssigneeId())
                 && (auth == null
-                    || auth.getAuthorities().stream().noneMatch(a -> Objects.equals(a.getAuthority(), "MANAGER")))) {
+                    || auth.getAuthorities().stream().noneMatch(a -> Objects.equals(a.getAuthority(), "ROLE_MANAGER")))) {
             throw new TodoException("Только MANAGER может менять исполнителя у задачи");
         }
     }
