@@ -18,17 +18,9 @@ public class TodoHistoryRepository {
             """;
 
     private static final String GET_BY_ID_HISTORY = """
-            SELECT *
-            FROM (SELECT todo_id as id, title, description, status, dead_line, author_id, assignee_id, created_at, updated_at
-                  FROM final_todo.todo_history
-                  WHERE todo_id = :id
-
-                  UNION ALL
-
-                  SELECT id, title, description, status, dead_line, author_id, assignee_id, created_at, updated_at
-                  FROM final_todo.todo
-                  WHERE id = :id
-                 ) AS th
+            SELECT todo_id as id, title, description, status, dead_line, author_id, assignee_id, created_at, updated_at
+            FROM final_todo.todo_history
+            WHERE todo_id = :id
             ORDER BY COALESCE(updated_at, created_at) DESC
             """;
 

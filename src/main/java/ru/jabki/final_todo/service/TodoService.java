@@ -31,7 +31,9 @@ public class TodoService {
     @Transactional(rollbackFor = Exception.class)
     public TodoResponse create(final Todo todo) {
         validate(todo);
-        return todoRepository.insert(todo);
+        TodoResponse todoResponse = todoRepository.insert(todo);
+        todoHistoryRepository.insertTodoHistory(todoResponse);
+        return todoResponse;
     }
 
     @Secured({"ROLE_MANAGER", "ROLE_USER"})
@@ -52,7 +54,7 @@ public class TodoService {
         TodoResponse todoResponseOld = todoRepository.getById(todoUpdate.getId());
         validateUpdate(todoUpdate, todoResponseOld);
         TodoResponse todoResponse = todoRepository.update(todoUpdate);
-        todoHistoryRepository.insertTodoHistory(todoResponseOld);
+        todoHistoryRepository.insertTodoHistory(todoResponse);
         return todoResponse;
     }
 
