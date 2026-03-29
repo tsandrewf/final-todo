@@ -10,9 +10,7 @@ import ru.jabki.final_todo.model.TodoResponse;
 import ru.jabki.final_todo.model.TodoUpdate;
 import ru.jabki.final_todo.service.TodoService;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor

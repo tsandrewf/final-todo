@@ -2,11 +2,9 @@ package ru.jabki.final_todo.repository;
 
 import lombok.AllArgsConstructor;
 import org.springframework.dao.DataAccessException;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
-import ru.jabki.final_todo.exception.BadRequestException;
 import ru.jabki.final_todo.exception.TodoByIdNotFoundException;
 import ru.jabki.final_todo.model.Status;
 import ru.jabki.final_todo.model.Todo;
@@ -29,14 +27,7 @@ public class TodoRepository {
             SELECT *
             FROM final_todo.todo
             WHERE id = :id
-            AND status <> 4
-            """;
-
-
-    private static final String LIST = """
-            SELECT *
-            FROM final_todo.todo
-            WHERE status <> 4
+            AND status <> """ + Status.DELETE.getId() + """
             """;
 
     private static final String UPDATE = """
@@ -50,8 +41,8 @@ public class TodoRepository {
         String searchSql = """
             SELECT *
             FROM final_todo.todo
-            WHERE status <> 4
-                """;
+            WHERE status <> """ + Status.DELETE.getId() + """
+            """;
 
         if (status != null) {
             searchSql = searchSql.concat(" AND status = :status");
@@ -69,7 +60,7 @@ public class TodoRepository {
                 SELECT 1
                 FROM final_todo.todo
                 WHERE (author_id = :user_id OR assignee_id = :user_id)
-                AND status <> 4
+                AND status NOT IN (""" + Status.DONE.getId() + ", " + Status.DELETE.getId() + ")" + """
             )
             """;
 
@@ -97,12 +88,6 @@ public class TodoRepository {
     }
 
     public boolean userByIdInvolved(final Long userId) {
-        /*try {
-            jdbcTemplate.queryForObject(USER_BY_ID_INVOLVED, new MapSqlParameterSource("user_id", userId), todoMapper);
-            return true;
-        } catch (EmptyResultDataAccessException e) {
-            return false;
-        }*/
         return Boolean.TRUE.equals(
                 jdbcTemplate.queryForObject(USER_BY_ID_INVOLVED, new MapSqlParameterSource("user_id", userId), Boolean.class));
     }
@@ -138,6 +123,22 @@ public class TodoRepository {
 
         params.addValue("status", (status == null ? null : status.getId()));
         params.addValue("assignee_id", assigneeId);
+
+        return params;
+    }
+
+    public MapSqlParameterSource todoResponseToSql(final TodoResponse todoResponse) {
+        final MapSqlParameterSource params = new MapSqlParameterSource();
+
+        params.addValue("todo_id", todoResponse.getId());
+        params.addValue("title", todoResponse.getTitle());
+        params.addValue("description", todoResponse.getDescription());
+        params.addValue("dead_line", todoResponse.getDeadLine());
+        params.addValue("author_id", todoResponse.getAuthorId());
+        params.addValue("assignee_id", todoResponse.getAssigneeId());
+        params.addValue("status", todoResponse.getStatus().getId());
+        params.addValue("created_at", todoResponse.getCreatedAt());
+        params.addValue("updated_at", todoResponse.getUpdatedAt());
 
         return params;
     }
