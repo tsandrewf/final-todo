@@ -64,6 +64,13 @@ public class TodoRepository {
             )
             """;
 
+    private static final String GET_BY_USER_IDS = """
+            SELECT *
+            FROM final_todo.todo
+            WHERE assignee_id IN (:user_ids)
+            AND status <> """ + Status.DELETE.getId() + """
+            """;
+
     private final TodoMapper todoMapper;
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
@@ -90,6 +97,10 @@ public class TodoRepository {
     public boolean userByIdInvolved(final Long userId) {
         return Boolean.TRUE.equals(
                 jdbcTemplate.queryForObject(USER_BY_ID_INVOLVED, new MapSqlParameterSource("user_id", userId), Boolean.class));
+    }
+
+    public List<TodoResponse> listByUserIds(List<Long> userIds) {
+        return jdbcTemplate.query(GET_BY_USER_IDS, new MapSqlParameterSource("user_ids", userIds), todoMapper);
     }
 
     public MapSqlParameterSource todoToSql(final Todo todo) {

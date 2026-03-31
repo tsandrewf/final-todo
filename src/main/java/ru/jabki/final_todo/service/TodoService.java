@@ -64,6 +64,12 @@ public class TodoService {
         return todoRepository.userByIdInvolved(userId);
     }
 
+    @Secured({"ROLE_MANAGER", "ROLE_USER"})
+    @Transactional(readOnly = true)
+    public List<TodoResponse> listByUserIds(List<Long> userIds) {
+        return todoRepository.listByUserIds(userIds);
+    }
+
     private void validate(final Todo todo) {
         if (todo == null) {
             throw new TodoException("Задача не задана");
