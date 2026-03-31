@@ -49,4 +49,10 @@ public class TodoController {
     public boolean userByIdInvolved(@PathVariable("id") Long userId) {
         return todoService.userByIdInvolved(userId);
     }
+
+    @GetMapping("/listByUserIds/")
+    @Operation(summary = "Получение списка задач по списку пользователей")
+    public List<TodoResponse> listByUserIds(@RequestParam List<Long> userId) {
+        return todoService.listByUserIds(userId);
+    }
 }
